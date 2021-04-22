@@ -1,0 +1,283 @@
+---
+variant: fcos
+version: 1.3.0
+passwd:
+  users:
+    - name: core
+      groups:
+        - wheel
+      password_hash: $y$j9T$...
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...
+    - name: pi
+      groups:
+        - wheel
+        - sudo
+        - docker
+      password_hash: $y$j9T$...
+      ssh_authorized_keys:
+        - ssh-ed25519 .AAAAC3NzaC1lZDI1NTE5AAAAI..
+storage:
+  directories:
+    - path:/root/.k8s-install
+      mode: 0755
+    - path: /etc/dnf/modules.d
+      mode: 0755
+  files:
+    #Set Hostname
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: pimaster.infra.lan
+    #Set Keyboard layout
+    - path: /etc/vconsole.conf
+      mode: 0644
+      contents:
+        inline: KEYMAP=fr-latin9_nodeadkeys
+    #Set Language
+    - path: /etc/locale.conf
+      mode: 0644
+      contents:
+        inline: LANG=fr_FR.UTF8
+    #Set audit to warn level
+    - path: /etc/sysctl.d/20-silence-audit.conf
+      mode: 0600
+      contents:
+        inline: kernel.printk=4
+    #Set CRIO config
+    - path: /etc/sysctl.d/99-kubernetes-crio.conf
+      mode: 0600
+      contents:
+        inline: |
+            net.bridge.bridge-nf-call-iptables  = 1
+            net.ipv4.ip_forward                 = 1
+            net.bridge.bridge-nf-call-ip6tables = 1
+    - path: /etc/modules-load.d/crio-net.conf
+      mode: 0600
+      contents:
+        inline: |
+           overlay
+           br_netfilter
+    - path: /etc/dnf/modules.d/crio.module
+      mode: 0600
+      contents:
+        inline: |
+            [cri-o]
+            name=cri-o
+            stream=1.17
+            profiles=
+            state=enabled
+    #Setup netfilter connection tracker
+    - path: /etc/modules-load.d/nf_conntrack.conf
+      mode: 0600
+      contents:
+        inline: nf_conntrack hashsize=8192 nf_conntrack_helper=1 tstamp=1 hooks=1 acct=1
+    #Setup kubernetes repository
+    - path: /etc/yum.repos.d/kubernetes.repo
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+            [kubernetes]
+            name=Kubernetes - $basearch 
+            baseurl=https://packages.cloud.google.com/yum/repos//kubernetes-el7-$basearch 
+            enabled=1
+            gpgcheck=1
+            repo_gpgcheck=1
+            gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    #Setup fedora repository
+    - path: /etc/yum.repos.d/fedora-updates-testing-modular.repo
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+            [updates-testing-modular]
+            name=Fedora Modular $releasever - $basearch - Test Updates
+            #baseurl=http://download.example/pub/fedora/linux/updates/testing/$releasever/Modular/$basearch/
+            metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-modular-f$releasever&arch=$basearch
+            enabled=1
+            countme=1
+            repo_gpgcheck=0
+            type=rpm
+            gpgcheck=1
+            metadata_expire=6h
+            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+            skip_if_unavailable=False
+
+            [updates-testing-modular-debuginfo]
+            name=Fedora Modular $releasever - $basearch - Test Updates Debug
+            #baseurl=http://download.example/pub/fedora/linux/updates/$releasever/Modular/$basearch/debug/
+            metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-modular-debug-f$releasever&arch=$basearch
+            enabled=1
+            repo_gpgcheck=0
+            type=rpm
+            gpgcheck=1
+            metadata_expire=6h
+            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+            skip_if_unavailable=False
+
+            [updates-testing-modular-source]
+            name=Fedora Modular $releasever - Test Updates Source
+            #baseurl=http://download.example/pub/fedora/linux/updates/$releasever/Modular/SRPMS/
+            metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-testing-modular-source-f$releasever&arch=$basearch
+            enabled=1
+            repo_gpgcheck=0
+            type=rpm
+            gpgcheck=1
+            metadata_expire=6h
+            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+            skip_if_unavailable=False
+    - path: /etc/yum.repos.d/fedora-updates-modular.repo
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+            [updates-modular]
+            name=Fedora Modular $releasever - $basearch - Updates
+            #baseurl=http://download.example/pub/fedora/linux/updates/$releasever/Modular/$basearch/
+            metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f$releasever&arch=$basearch
+            enabled=1
+            countme=1
+            repo_gpgcheck=0
+            type=rpm
+            gpgcheck=1
+            metadata_expire=6h
+            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+            skip_if_unavailable=False
+
+            [updates-modular-debuginfo]
+            name=Fedora Modular $releasever - $basearch - Updates - Debug
+            #baseurl=http://download.example/pub/fedora/linux/updates/$releasever/Modular/$basearch/debug/
+            metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-debug-f$releasever&arch=$basearch
+            enabled=1
+            repo_gpgcheck=0
+            type=rpm
+            gpgcheck=1
+            metadata_expire=6h
+            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+            skip_if_unavailable=False
+
+            [updates-modular-source]
+            name=Fedora Modular $releasever - Updates Source
+            #baseurl=http://download.example/pub/fedora/linux/updates/$releasever/Modular/SRPMS/
+            metalink=https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-source-f$releasever&arch=$basearch
+            enabled=1
+            repo_gpgcheck=0
+            type=rpm
+            gpgcheck=1
+            metadata_expire=6h
+            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+            skip_if_unavailable=False
+    - path: /etc/yum.repos.d/fedora-modular.repo
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+            [fedora-modular]
+            name=Fedora Modular $releasever - $basearch
+            #baseurl=http://download.example/pub/fedora/linux/releases/$releasever/Modular/$basearch/os/
+            metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-$releasever&arch=$basearch
+            enabled=1
+            countme=1
+            metadata_expire=7d
+            repo_gpgcheck=0
+            type=rpm
+            gpgcheck=1
+            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+            skip_if_unavailable=False
+
+            [fedora-modular-debuginfo]
+            name=Fedora Modular $releasever - $basearch - Debug
+            #baseurl=http://download.example/pub/fedora/linux/releases/$releasever/Modular/$basearch/debug/tree/
+            metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-debug-$releasever&arch=$basearch
+            enabled=1
+            metadata_expire=7d
+            repo_gpgcheck=0
+            type=rpm
+            gpgcheck=1
+            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+            skip_if_unavailable=False
+
+            [fedora-modular-source]
+            name=Fedora Modular $releasever - Source
+            #baseurl=http://download.example/pub/fedora/linux/releases/$releasever/Modular/source/tree/
+            metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-source-$releasever&arch=$basearch
+            enabled=1
+            metadata_expire=7d
+            repo_gpgcheck=0
+            type=rpm
+            gpgcheck=1
+            gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+            skip_if_unavailable=False
+    #Setup network connection
+    - path: /etc/NetworkManager/system-connections/enabcm6e4ei0.nmconnection
+      mode: 0600
+      overwrite: true
+      contents:
+        inline: |
+            [connection]
+            type=ethernet
+            id="Wired connection 1"
+            interface-name=enabcm6e4ei0
+
+            [ipv4]
+            method=manual
+            addresses=${IP_MASTER}/24
+            gateway=${IP_GATEWAY}
+            dns=9.9.9.9;1.1.1.1
+   #Disable SELinux
+    - path: /etc/selinux/config
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+            # This file controls the state of SELinux on the system.
+            # SELINUX= can take one of these three values:
+            #     enforcing - SELinux security policy is enforced.
+            #     permissive - SELinux prints warnings instead of enforcing.
+            #     disabled - No SELinux policy is loaded.
+            SELINUX=disabled
+            # SELINUXTYPE= can take one of these three values:
+            #     targeted - Targeted processes are protected,
+            #     minimum - Modification of targeted policy. Only selected processes are protected.
+            #     mls - Multi Level Security protection.
+            SELINUXTYPE=targeted
+  #Set Time Zone
+  links:
+    - path: /etc/localtime
+      target: /usr/share/zoneinfo/Europe/Paris
+      hard: false
+  
+systemd:
+  units:
+    - name: install-k8s-1stage.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Install Kubernetes packages
+        Wants=network-online.target
+        After=network-online.target
+        After=multi-user.target
+        ConditionPathExists=!/root/.k8s-install/1stage
+        [Service]
+        Type=oneshot
+        ExecStart=rpm-ostree install cri-o conntrack kubelet kubeadm kubectl --allow-inactive && touch /root/.k8s-install/1stage;systemctl reboot
+        [Install]
+        WantedBy=multi-user.target
+    - name: install-k8s-2stage.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Setup Kubernetes
+        Wants=network-online.target
+        After=network-online.target
+        After=multi-user.target
+        ConditionPathExists=/root/.k8s-install/1stage
+        [Service]
+        Type=oneshot
+        ExecStart=rpm-ostree install cri-o conntrack kubelet kubeadm kubectl --allow-inactive && touch /root/.k8s-install/1stage;systemctl reboot
+        [Install]
+        WantedBy=multi-user.target
+    - name: docker.service
+      mask: true
+      

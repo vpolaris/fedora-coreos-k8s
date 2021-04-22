@@ -1,0 +1,12 @@
+
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: JoinConfiguration
+nodeRegistration:
+  kubeletExtraArgs:
+    volume-plugin-dir: "/opt/libexec/kubernetes/kubelet-plugins/volume/exec/"
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: ${MASTER}:6443
+    token: ${JOIN_TOKEN}
+    caCertHashes:
+    - sha256:${JOIN_CERT_HASH}
