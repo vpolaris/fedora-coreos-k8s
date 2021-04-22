@@ -5,7 +5,7 @@ printf "KUBELET_EXTRA_ARGS=--cgroup-driver=systemd\n" | tee /etc/sysconfig/kubel
 
 systemctl enable --now cri-o && systemctl enable --now kubelet
 export k_version=$(echo v"$(rpm -qi kubeadm | grep Version | cut  -d':' -f2 |xargs)")
-
+mkdir -p /root/.k8s-install/config
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/cluster_template.yml -o /tmp/cluster_template
 envsubst '${k_version}' < /tmp/cluster_template > /root/.k8s-install/config/clusterconfig.yml
 kubeadm init --config /root/.k8s-install/config/clusterconfig.yml > /tmp/k8s-init.log
