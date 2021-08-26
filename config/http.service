@@ -23,17 +23,13 @@
 <!-- See avahi.service(5) for more information about this configuration file -->
 
 <service-group>
-
-  <name replace-wildcards="yes">%h kubeconfig</name>
+<name replace-wildcards="yes">%h kubeconfig</name>
   <service protocol="ipv4">
-  <service>
     <type>_http._tcp</type>
     <domain-name>local</domain-name>
     <host-name>pi01.local</host-name>
     <port>8089</port>
     <txt-record>path=/var/srv/share</txt-record>
     <txt-record>u=core</txt-record>
-
-  </service>
-
+   </service>
 </service-group>

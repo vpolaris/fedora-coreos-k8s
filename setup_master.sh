@@ -30,8 +30,16 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 NETDEVICE="$(ip -br link | grep -Ev "^(lo|cni|veth|flannel|wlan)" | awk '{print $1}')"
 IPV4="$(ip -4 -br a s ${NETDEVICE} | awk '{print $3}' | cut -d'/' -f1)"
 
+iptables -A INPUT -p udp -m udp --dport 5353 -j ACCEPT
+iptables -A INPUT ç-p tcp -m tcp --dport 8089 -j ACCEPT
+podman pull -q  docker.io/pierrezemb/gostatic
+podman run -d -p 8089:8043 -v /var/srv/share:/srv/http --name goStatic pierrezemb/gostatic
+
 printf "NETDEVICE=${NETDEVICE}\n" > /srv/share/kubejoin.ini
 printf "HOSTNAME=$(hostname -f)\n" >> /srv/share/kubejoin.ini
 printf "IPV4=${IPV4}\n" >> /srv/share/kubejoin.ini
 printf "TOKEN=${TOKEN}\n" >> /srv/share/kubejoin.ini
 printf "SHA=${SHA}\n" >> /srv/share/kubejoin.ini
+
+curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/http.service -o /etc/avahi/services/http.service
+echo $IPV4 "$(hostname --short)".local >> /etc/avahi/hosts
