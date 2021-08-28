@@ -30,7 +30,8 @@ bootstrapTokens:
       - authentication
       - signing
     groups:
-      - system:bootstrappers:kubeadm:default-node-token
+      - system: bootstrappers:kubeadm:default-node-token
+
 nodeRegistration:
   criSocket: unix:///var/run/crio/crio.sock
   taints:
@@ -42,7 +43,7 @@ nodeRegistration:
     container-runtime-endpoint: unix:///var/run/crio/crio.sock
     pod-infra-container-image: k8s.gcr.io/pause:3.5
     v:4
-  imagePullPolicy: IfNotPresent  
+  imagePullPolicy: IfNotPresent
 localAPIEndpoint:
   advertiseAddress: ${IPV4}
   bindPort: 6443
@@ -95,7 +96,7 @@ shutdownGracePeriodCriticalPods: 2m
 staticPodPath: /etc/kubernetes/manifests
 streamingConnectionIdleTimeout: 5s
 syncFrequency: 10s
-systemReserved: 
+systemReserved:
   cpu:200m
   memory:800M
 volumeStatsAggPeriod: 10s
