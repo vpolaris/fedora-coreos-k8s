@@ -2,12 +2,12 @@ apiVersion: kubeadm.k8s.io/v1beta3
 kind: InitConfiguration
 bootstrapTokens:
   - token: ${TOKEN}
-    description: "node registration token"
+    description: node registration token
     usages:
       - authentication
       - signing
     groups:
-      - system: bootstrappers:kubeadm:default-node-token
+      - system:bootstrappers:kubeadm:default-node-token
 
 nodeRegistration:
   criSocket: unix:///var/run/crio/crio.sock
