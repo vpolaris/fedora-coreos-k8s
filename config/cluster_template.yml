@@ -43,6 +43,9 @@ nodeRegistration:
     pod-infra-container-image: k8s.gcr.io/pause:3.5
     v:4
   imagePullPolicy: IfNotPresent  
+localAPIEndpoint:
+  advertiseAddress: ${IPV4}
+  bindPort: 6443
 certificateKey: ${SHA}
 skipPhases:
   - certs/all
