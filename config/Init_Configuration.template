@@ -1,0 +1,29 @@
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+bootstrapTokens:
+  - token: ${TOKEN}
+    description: node registration token
+    usages:
+      - authentication
+      - signing
+    groups:
+      - system:bootstrappers:kubeadm:default-node-token
+
+nodeRegistration:
+  criSocket: unix:///var/run/crio/crio.sock
+  taints:
+    - key: kubeadmNode
+      value: master
+      effect: NoSchedule
+  kubeletExtraArgs:
+    container-runtime: remote
+    container-runtime-endpoint: unix:///var/run/crio/crio.sock
+    pod-infra-container-image: k8s.gcr.io/pause:3.5
+  imagePullPolicy: IfNotPresent
+localAPIEndpoint:
+  advertiseAddress: ${IPV4}
+  bindPort: 6443
+certificateKey: ${SHA}
+skipPhases:
+  - certs/all
+  
