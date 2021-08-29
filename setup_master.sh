@@ -40,7 +40,7 @@ for yaml in $(ls ${conf_dir}/*.yaml); do
   echo "---"  >> "${conf_dir}/Kubernetes.yaml"
 done
 
-kubeadm init phase certs all < "${conf_dir}/Kubernetes.yaml"
+kubeadm init phase certs all --config "${conf_dir}/Kubernetes.yaml"
 export SHA="$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //')"
 
 #Install Kubernetes
@@ -63,9 +63,10 @@ sudo cp -i /etc/kubernetes/admin.conf /home/core/.kube/config
 sudo chown core:core /home/core/.kube/config
 
 rm /root/.k8s-install/1stage
+kubectl taint nodes --all node-role.kubernetes.io/master-
 
 sleep 90
-# kubectl taint nodes --all node-role.kubernetes.io/master-
+
 #Deploy flannel
 kubectl patch node $(hostname) -p '{"spec":{"podCIDR":"10.11.0.0/16"}}'
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
