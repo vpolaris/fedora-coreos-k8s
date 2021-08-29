@@ -10,7 +10,7 @@ bootstrapTokens:
       - system:bootstrappers:kubeadm:default-node-token
 
 nodeRegistration:
-  name: k8s-master-pi01
+  name: ${HOSTNAME}
   criSocket: unix:///var/run/crio/crio.sock
   taints:
     - key: kubeadmNode
