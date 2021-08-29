@@ -13,9 +13,6 @@ nodeRegistration:
   name: ${HOSTNAME}
   criSocket: unix:///var/run/crio/crio.sock
   taints:
-    - key: kubeadmNode
-      value: master
-      effect: NoSchedule
   kubeletExtraArgs:
     container-runtime: remote
     container-runtime-endpoint: unix:///var/run/crio/crio.sock
