@@ -64,7 +64,7 @@ sudo chown core:core /home/core/.kube/config
 
 rm /root/.k8s-install/1stage
 
-
+sleep 90
 # kubectl taint nodes --all node-role.kubernetes.io/master-
 #Deploy flannel
 kubectl patch node $(hostname) -p '{"spec":{"podCIDR":"10.11.0.0/16"}}'
