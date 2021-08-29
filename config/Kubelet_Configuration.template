@@ -15,7 +15,7 @@ authorization:
     cacheUnauthorizedTTL: 20s
 cgroupDriver: systemd
 clusterDNS:
-- 10.12.0.10
+- 10.0.0.10
 clusterDomain: cluster.local
 containerLogMaxFiles: 7
 configMapAndSecretChangeDetectionStrategy: Watch

@@ -10,6 +10,7 @@ bootstrapTokens:
       - system:bootstrappers:kubeadm:default-node-token
 
 nodeRegistration:
+  name: k8s-master-pi01
   criSocket: unix:///var/run/crio/crio.sock
   taints:
     - key: kubeadmNode
@@ -25,5 +26,4 @@ localAPIEndpoint:
   bindPort: 6443
 certificateKey: ${SHA}
 skipPhases:
-  - certs/all
-  
+  - certs
