@@ -8,6 +8,7 @@ export TOKEN="$(kubeadm token create)"
 export NETDEVICE="$(ip -br link | grep -Ev "^(lo|cni|veth|flannel|wlan)" | awk '{print $1}')"
 export IPV4="$(ip -4 -br a s ${NETDEVICE} | awk '{print $3}' | cut -d'/' -f1)"
 export NETRANGE="$(echo $IPV4|cut -d'.' -f1-3)"
+export HOSTNAME="$(hostname -f)"
 kubeadm init phase certs all
 export SHA="$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //')"
 echo $IPV4 "$(hostname --short)".local >> /etc/avahi/hosts
@@ -30,7 +31,7 @@ curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/conf
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/KubeProxy_Configuration.template -o /tmp/KubeProxy_Configuration.template
 
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA}' < /tmp/Cluster_Configuration.template > "${conf_dir}/Cluster_Configuration.yaml"
-envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA}' < /tmp/Init_Configuration.template > "${conf_dir}/Init_Configuration.yaml"
+envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${HOSTNAME}' < /tmp/Init_Configuration.template > "${conf_dir}/Init_Configuration.yaml"
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA}' < /tmp/Kubelet_Configuration.template > "${conf_dir}/Kubelet_Configuration.yaml"
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA}' < /tmp/KubeProxy_Configuration.template > "${conf_dir}/KubeProxy_Configuration.yaml"
 
@@ -72,17 +73,20 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 #Deploy MetalLB
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
 
-kubectl apply -f - "apiVersion: v1
+cat << EOF | kubectl apply -f -
+apiVersion: v1
 kind: ConfigMap
 metadata:
   namespace: metallb-system
   name: config
 data:
-  config: |     address-pools:
+  config: |
+    address-pools:
     - name: default
       protocol: layer2
       addresses:
-      - ${NETRANGE}.210-${NETRANGE}.254"
+      - ${NETRANGE}.210-${NETRANGE}.254
+EOF
       
 
 #Install HAProxy
