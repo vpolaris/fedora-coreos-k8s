@@ -37,7 +37,7 @@ envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA}' < /tmp/KubeProxy_Configuration.t
 #YAML file's mergeing
 for yaml in $(ls ${conf_dir}/*.yaml); do
   printf "process file $yaml\n"
-  cat "${conf_dir}/${yaml}" >> "${conf_dir}/Kubernetes.yaml"
+  cat "${yaml}" >> "${conf_dir}/Kubernetes.yaml"
   echo "---"  >> "${conf_dir}/Kubernetes.yaml"
 done
 

@@ -37,8 +37,8 @@ resolvConf: /run/systemd/resolve/resolv.conf
 podCIDR: 10.11.0.0/16
 rotateCertificates: true
 runtimeRequestTimeout: 10m
-shutdownGracePeriod: 1m
-shutdownGracePeriodCriticalPods: 2m
+shutdownGracePeriod: 30s
+shutdownGracePeriodCriticalPods: 10s
 staticPodPath: /etc/kubernetes/manifests
 streamingConnectionIdleTimeout: 5s
 syncFrequency: 10s
