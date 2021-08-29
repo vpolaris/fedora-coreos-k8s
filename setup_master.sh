@@ -9,8 +9,6 @@ export NETDEVICE="$(ip -br link | grep -Ev "^(lo|cni|veth|flannel|wlan)" | awk '
 export IPV4="$(ip -4 -br a s ${NETDEVICE} | awk '{print $3}' | cut -d'/' -f1)"
 export NETRANGE="$(echo $IPV4|cut -d'.' -f1-3)"
 export HOSTNAME="$(hostname -f)"
-kubeadm init phase certs all
-export SHA="$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //')"
 echo $IPV4 "$(hostname --short)".local >> /etc/avahi/hosts
 
 #Copy service file
@@ -41,6 +39,9 @@ for yaml in $(ls ${conf_dir}/*.yaml); do
   cat "${yaml}" >> "${conf_dir}/Kubernetes.yaml"
   echo "---"  >> "${conf_dir}/Kubernetes.yaml"
 done
+
+kubeadm init phase certs all < "${conf_dir}/Kubernetes.yaml"
+export SHA="$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //')"
 
 #Install Kubernetes
 kubeadm init --config "${conf_dir}/Kubernetes.yaml" --v=3 > /tmp/k8s-init.log
@@ -107,7 +108,7 @@ iptables-save > /etc/sysconfig/iptables
 
 #Setup mDNS web server
 podman pull -q  docker.io/pierrezemb/gostatic
-podman run -d -p 8089:8043 -v /var/srv/share:/srv/http --name goStatic pierrezemb/gostatic
+podman run -dt -p 8089:8043 -v /var/srv/share:/srv/http --name goStatic pierrezemb/gostatic
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/http.service -o /etc/avahi/services/http.service
 
 
