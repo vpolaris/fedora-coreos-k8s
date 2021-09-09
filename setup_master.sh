@@ -81,22 +81,29 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 sleep 120
 
 #Install Helm
+printf " Helm installtion started.\n "
+mkdir -p /root/.config
 curl -fsSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 -o /tmp/get_helm.sh
 chmod 700 /tmp/get_helm.sh
 sh /tmp/get_helm.sh
 HLBIN="/usr/local/bin/helm"
 
+printf " Helm setup started.\n "
+${HLBIN} repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+${HLBIN} repo add metallb https://metallb.github.io/metallb
+${HLBIN} repo add haproxy-ingress https://haproxy-ingress.github.io/charts
+${HLBIN} repo update
+
 #Deploy Ingress NGINX
 #https://kubernetes.github.io/ingress-nginx/deploy/
 
 printf " Ingress NGINX installtion started.\n "
-${HLBIN} repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-${HLBIN} repo update
-${HLBIN} install ingress-nginx ingress-nginx/ingress-nginx >> ${log_file}
+
+${HLBIN} install ingress-nginx ingress-nginx/ingress-nginx --create-namespace --namespace network >> ${log_file}
 # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/baremetal/deploy.yaml
 
 POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -it $POD_NAME -- /nginx-ingress-controller --version
+kubectl exec -it $POD_NAME -- /nginx-ingress-controller --version >> ${log_file}
 
 sleep 120
 
@@ -121,12 +128,11 @@ data:
       - ${NETRANGE}.210-${NETRANGE}.254
 EOF
 
-${HLBIN} repo add metallb https://metallb.github.io/metallb
-${HLBIN} repo update
-${HLBIN} install metallb metallb/metallb -f ${MLBCONFIG} >> ${log_file}
+
+${HLBIN} install metallb metallb/metallb  --namespace network -f ${MLBCONFIG} >> ${log_file}
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
-kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"      
+kubectl create secret generic -n network memberlist --from-literal=secretkey="$(openssl rand -base64 128)"      
 mv "${MLBCONFIG}" "${MLBCONFIG}.bkp"
 
 sleep 120
@@ -135,13 +141,8 @@ sleep 120
 
 printf "HAProxy installtion started.\n "
 HACONFIG="${conf_dir}/haproxy-ingress-values.yaml"
-${HLBIN} repo add haproxy-ingress https://haproxy-ingress.github.io/charts
-${HLBIN} repo update
 echo -e "controller:\\n  hostNetwork: true" > ${HACONFIG}
-${HLBIN}install haproxy-ingress haproxy-ingress/haproxy-ingress\
-  --create-namespace --namespace ingress-controller\
-  --version 1.0.0\
-  -f "${HACONFIG}" >> ${log_file}
+${HLBIN} install haproxy-ingress haproxy-ingress/haproxy-ingress  --namespace network  -f "${HACONFIG}" >> ${log_file}
 mv "${HACONFIG}"  "${HACONFIG}.bkp"
 
 #Setup network rules
