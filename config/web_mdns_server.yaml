@@ -1,0 +1,108 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webinfo-ingress
+  annotations:
+    kubernetes.io/ingress.class: haproxy
+spec:
+  rules:
+  - host: webns.192.168.112.121.rpi.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webmdns
+            port: 
+              number: 8089
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webmdns
+  namespace: test
+  labels:
+    app: webmdns
+    service: webmdns
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8089
+  selector:
+    app: webmdns
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webinfo-webmdns
+  namespace: test
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webmdns-v1
+  namespace: test
+  labels:
+    app: webmdns
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webmdns
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: webmdns
+        version: v1
+    spec:
+      containers:
+      - command:
+        - /goStatic
+        env:
+        - name: PATH
+          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        - name: TERM
+          value: xterm
+        - name: container
+          value: podman
+        image: docker.io/pierrezemb/gostatic:latest
+        name: gostatic
+        ports:
+        - containerPort: 8043
+          hostPort: 8089
+          protocol: TCP
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            drop:
+            - CAP_MKNOD
+            - CAP_NET_RAW
+            - CAP_AUDIT_WRITE
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsGroup: 4103
+          runAsUser: 4103
+          seLinuxOptions: {}
+        tty: true
+        volumeMounts:
+        - mountPath: /srv/http
+          name: var-srv-share-host-0
+        workingDir: /
+      dnsConfig: {}
+      volumes:
+      - hostPath:
+          path: /var/srv/share
+          type: Directory
+        name: var-srv-share-host-0
