@@ -81,7 +81,7 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 sleep 120
 
 #Install Helm
-
+#https://helm.sh/docs/intro/install/
 printf " Helm installtion started.\n "
 export HELM_CACHE_HOME="/var/cache/helm"
 export HELM_DATA_HOME="/var/lib/helm"
@@ -106,8 +106,8 @@ printf " Ingress NGINX installtion started.\n "
 ${HLBIN} install ingress-nginx ingress-nginx/ingress-nginx --create-namespace --namespace network >> ${log_file}
 # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/baremetal/deploy.yaml
 
-POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -it $POD_NAME -- /nginx-ingress-controller --version >> ${log_file}
+POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=ingress-nginx -n network -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n network -it $POD_NAME -- /nginx-ingress-controller  --version >> ${log_file}
 
 sleep 120
 
@@ -121,7 +121,7 @@ cat << EOF > ${MLBCONFIG}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: metallb-system
+  namespace: network
   name: config
 data:
   config: |
@@ -160,9 +160,12 @@ iptables-save > /etc/sysconfig/iptables
 printf "Setup mDNS web server.\n "
 SHARE="/var/srv/share"
 mkdir -p ${SHARE}
-podman pull -q  docker.io/pierrezemb/gostatic
-podman run -dt -p 8089:8043 -v ${SHARE}:/srv/http --name goStatic pierrezemb/gostatic
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/http.service -o /etc/avahi/services/http.service
+curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/web_mdns_server.yaml -o /tmp/web_mdns_server.template
+envsubst '${HOSTNAME}' < /tmp/web_mdns_server.template > "${conf_dir}/web_mdns_server.yaml"
+kubectl apply -f "${conf_dir}/web_mdns_server.yaml"
+# podman pull -q  docker.io/pierrezemb/gostatic
+# podman run -dt -p 8089:8043 -v ${SHARE}:/srv/http --name goStatic pierrezemb/gostatic
 
 KUBCONFIG="${SHARE}/kubejoin.ini"
 printf "NETDEVICE=${NETDEVICE}\n" > ${KUBCONFIG}
