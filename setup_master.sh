@@ -81,12 +81,16 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 sleep 120
 
 #Install Helm
+
 printf " Helm installtion started.\n "
-mkdir -p /root/.config
+export HELM_CACHE_HOME="/var/cache/helm"
+export HELM_DATA_HOME="/var/lib/helm"
+export HELM_CONFIG_HOME="/etc/helm"
 curl -fsSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 -o /tmp/get_helm.sh
 chmod 700 /tmp/get_helm.sh
 sh /tmp/get_helm.sh
 HLBIN="/usr/local/bin/helm"
+${HLBIN} completion bash > /etc/bash_completion.d/helm
 
 printf " Helm setup started.\n "
 ${HLBIN} repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
