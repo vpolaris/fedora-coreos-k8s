@@ -3,6 +3,8 @@
 #altered subnet 10.244.0.0/16 to 10.11.0.0/16
 #altered add iface for rpi 4 in args (- --iface=enabcm6e4ei0)
 #altered volume path /run/flannel ==> /var/run/flannel
+#adding vxlan options GBP and direct routing for loca network see:
+#https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md
 ---
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -132,14 +134,17 @@ data:
     {
       "Network": "${PODCIDR}/16",
       "Backend": {
-        "Type": "vxlan"
+        "Type": "vxlan",
+        "GBP": true,
+        "DirectRouting": true,
+        "Port": 8472
       }
     }
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: kube-flannel-ds-arm64
+  name: kube-flannel-ds
   namespace: kube-system
   labels:
     tier: node
@@ -174,7 +179,7 @@ spec:
       serviceAccountName: flannel
       initContainers:
       - name: install-cni
-        image: quay.io/coreos/flannel:v0.11.0-arm64
+        image: quay.io/coreos/flannel:v0.14.0-arm64
         command:
         - cp
         args:
@@ -195,6 +200,8 @@ spec:
         - --ip-masq
         - --kube-subnet-mgr
         - --iface=enabcm6e4ei0
+        - --healthz-port=2526
+        - -v=3
         resources:
           requests:
             cpu: "100m"
