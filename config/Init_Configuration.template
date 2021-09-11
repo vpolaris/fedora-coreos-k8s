@@ -8,7 +8,6 @@ bootstrapTokens:
       - signing
     groups:
       - system:bootstrappers:kubeadm:default-node-token
-
 nodeRegistration:
   name: ${HOSTNAME}
   criSocket: unix:///var/run/crio/crio.sock

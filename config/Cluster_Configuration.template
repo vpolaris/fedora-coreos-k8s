@@ -6,7 +6,7 @@ apiServer:
     authorization-mode: Node,RBAC
   timeoutForControlPlane: 4m0s
 certificatesDir: /etc/kubernetes/pki
-clusterName: kubernetes
+clusterName: rpi
 controllerManager:
   extraArgs:
     flex-volume-plugin-dir: /var/lib/kubelet/volumeplugins
@@ -16,7 +16,7 @@ etcd:
     dataDir: /var/lib/etcd
 imageRepository: k8s.gcr.io
 networking:
-  dnsDomain: cluster.local
-  podSubnet: 10.11.0.0/16
-  serviceSubnet: 10.12.0.0/12
+  dnsDomain: rpi.local
+  podSubnet: ${PODCIDR}/24
+  serviceSubnet: 10.11.2.0/24
 scheduler: {}

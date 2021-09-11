@@ -4,42 +4,42 @@ bindAddress: ${IPV4}
 bindAddressHardFail: false
 clientConnection:
   acceptContentTypes: ""
-  burst: 0
-  contentType: ""
+  burst: 32
+  contentType: application/vnd.kubernetes.protobuf
   kubeconfig: /var/lib/kube-proxy/kubeconfig.conf
-  qps: 0
-clusterCIDR: 10.11.0.0/16
-configSyncPeriod: 0s
+  qps: 5
+clusterCIDR: 10.11.1.0/24
+configSyncPeriod: 15m0s
 conntrack:
-  maxPerCore: null
-  min: null
-  tcpCloseWaitTimeout: null
-  tcpEstablishedTimeout: null
-detectLocalMode: ""
+  maxPerCore: 32768
+  min: 0
+  tcpCloseWaitTimeout: 1h0m0s
+  tcpEstablishedTimeout: 12h0m0s
+detectLocalMode: clusterCIDR
 enableProfiling: false
-healthzBindAddress: ""
+healthzBindAddress: 0.0.0.0:10256
 hostnameOverride: ""
 iptables:
   masqueradeAll: false
-  masqueradeBit: null
+  masqueradeBit: 14
   minSyncPeriod: 10s
   syncPeriod: 1m
 ipvs:
-  excludeCIDRs: null
-  minSyncPeriod: 0s
-  scheduler: ""
+  excludeCIDRs: []
+  minSyncPeriod: 1m
+  scheduler: rr
   strictARP: true
-  syncPeriod: 0s
+  syncPeriod: 3m
   tcpFinTimeout: 0s
   tcpTimeout: 0s
   udpTimeout: 0s
-metricsBindAddress: ""
-mode: ""
-nodePortAddresses: null
-oomScoreAdj: null
-portRange: ""
+metricsBindAddress: 127.0.0.1:10249
+mode: ipvs
+nodePortAddresses: [127.0.0.0/8,192.168.112.0/24] 
+oomScoreAdj: -555
+portRange: 0-0
 showHiddenMetricsForVersion: ""
-udpIdleTimeout: 0s
+udpIdleTimeout: 2s
 winkernel:
   enableDSR: false
   networkName: ""

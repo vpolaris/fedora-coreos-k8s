@@ -4,14 +4,14 @@ authentication:
   anonymous:
     enabled: false
   webhook:
-    cacheTTL: 5m
+    cacheTTL: 5m0s
     enabled: true
   x509:
     clientCAFile: /etc/kubernetes/pki/ca.crt
 authorization:
   mode: Webhook
   webhook:
-    cacheAuthorizedTTL: 5m
+    cacheAuthorizedTTL: 5m0s
     cacheUnauthorizedTTL: 20s
 cgroupDriver: systemd
 clusterDNS:
@@ -25,16 +25,16 @@ fileCheckFrequency: 0s
 healthzBindAddress: 127.0.0.1
 healthzPort: 10248
 httpCheckFrequency: 0s
-imageMinimumGCAge: 5m
+imageMinimumGCAge: 5m0s
 imageGCHighThresholdPercent: 85
 imageGCLowThresholdPercent: 80
 logging: {}
 memorySwap: {}
-nodeStatusReportFrequency: 5m
-nodeStatusUpdateFrequency: 40s
+nodeStatusReportFrequency: 5m0s
+nodeStatusUpdateFrequency: 45s
 nodeLeaseDurationSeconds: 120
 resolvConf: /run/systemd/resolve/resolv.conf
-podCIDR: 10.11.0.0/16
+podCIDR: ${PODCIDR}/24
 rotateCertificates: true
 runtimeRequestTimeout: 10m
 shutdownGracePeriod: 30s
