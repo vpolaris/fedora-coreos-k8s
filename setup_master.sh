@@ -3,6 +3,7 @@
 #Initialize script environment
 conf_dir="/root/.k8s-install/config"
 log_file="/tmp/k8s-init.log"
+export PODCIDR="10.11.1.0"
 export c_version="$(rpm -qi cri-o | grep Version | cut  -d':' -f2 |xargs)"
 export k_version="$(echo v"$(rpm -qi kubeadm | grep Version | cut  -d':' -f2 |xargs)")"
 export TOKEN="$(kubeadm token create)"
@@ -13,11 +14,10 @@ export HOSTNAME="$(hostname -f)"
 echo $IPV4 "$(hostname --short)".local >> /etc/avahi/hosts
 
 mkdir -p "${conf_dir}"
-mkdir -p ~/.kube
 
 #Copy service file
 cp /usr/lib/systemd/system/kubelet.service /etc/systemd/system/
-chmod 644 /usr/lib/systemd/system/kubelet.service
+chmod 644 /etc/systemd/system/kubelet.service
 
 #Initialize services
 sed -i -z s+/usr/share/containers/oci/hooks.d+/etc/containers/oci/hooks.d+ /etc/crio/crio.conf
@@ -31,10 +31,10 @@ curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/conf
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/Kubelet_Configuration.template -o /tmp/Kubelet_Configuration.template
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/KubeProxy_Configuration.template -o /tmp/KubeProxy_Configuration.template
 
-envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA}' < /tmp/Cluster_Configuration.template > "${conf_dir}/Cluster_Configuration.yaml"
+envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${PODCIDR}' < /tmp/Cluster_Configuration.template > "${conf_dir}/Cluster_Configuration.yaml"
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${HOSTNAME}' < /tmp/Init_Configuration.template > "${conf_dir}/Init_Configuration.yaml"
-envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA}' < /tmp/Kubelet_Configuration.template > "${conf_dir}/Kubelet_Configuration.yaml"
-envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA}' < /tmp/KubeProxy_Configuration.template > "${conf_dir}/KubeProxy_Configuration.yaml"
+envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${PODCIDR}' < /tmp/Kubelet_Configuration.template > "${conf_dir}/Kubelet_Configuration.yaml"
+envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${PODCIDR}' < /tmp/KubeProxy_Configuration.template > "${conf_dir}/KubeProxy_Configuration.yaml"
 
 #YAML file's merging
 for yaml in $(ls ${conf_dir}/*.yaml); do
@@ -76,8 +76,15 @@ sleep 120
 #Deploy flannel
 #https://github.com/flannel-io/flannel
 printf "Flannel installtion started.\n "
-kubectl patch node $(hostname) -p '{"spec":{"podCIDR":"10.11.0.0/16"}}'
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> ${log_file}
+kubectl patch node $(hostname) -p '{"spec":{"podCIDR":" ${PODCIDR}/24"}}'
+curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/flannel-arm64.yml -o "/tmp/flannel-arm64.template"
+envsubst '${PODCIDR}' < /tmp/flannel-arm64.template > "${conf_dir}/flannel-arm64.yaml"
+kubectl apply -f "${conf_dir}/flannel-arm64.yaml"
+mv "${conf_dir}/flannel-arm64.yaml" "${conf_dir}/flannel-arm64.yaml.bkp"
+
+# kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> ${log_file}
+# kubectl patch configmaps -n kube-system kube-flannel-cfg  -p '{"data": {"net-conf.json": "{\n  \"Network\": \"10.11.0.0/16\",\n  \"Backend\": {\n    \"Type\": \"vxlan\"\n  }\n}\n"}}'
+
 sleep 120
 
 #Install Helm
@@ -113,7 +120,6 @@ sleep 120
 
 #Deploy MetalLB
 #https://metallb.universe.tf/
-
 printf "MetalLB installtion started.\n "
 MLBCONFIG="${conf_dir}/metallb_values.yaml"
 # cat << EOF | kubectl apply -f -
@@ -142,7 +148,6 @@ mv "${MLBCONFIG}" "${MLBCONFIG}.bkp"
 sleep 120
 
 #Install HAProxy
-
 printf "HAProxy installtion started.\n "
 HACONFIG="${conf_dir}/haproxy-ingress-values.yaml"
 echo -e "controller:\\n  hostNetwork: true" > ${HACONFIG}
@@ -156,7 +161,6 @@ iptables -A INPUT -p tcp -m tcp --dport 8089 -j ACCEPT
 iptables-save > /etc/sysconfig/iptables
 
 #Setup mDNS web server
-
 printf "Setup mDNS web server.\n "
 SHARE="/var/srv/share"
 mkdir -p ${SHARE}
