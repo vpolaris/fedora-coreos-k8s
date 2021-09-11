@@ -76,7 +76,8 @@ sleep 120
 #Deploy flannel
 #https://github.com/flannel-io/flannel
 printf "Flannel installtion started.\n "
-kubectl patch node $(hostname) -p '{"spec":{"podCIDR":" ${PODCIDR}/24"}}'
+PATCH="{\"spec\":{\"podCIDR\":\"${PODCIDR}/24\"}}"
+kubectl patch node $(hostname) -p "${PATCH}"
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/flannel-arm64.yml -o "/tmp/flannel-arm64.template"
 envsubst '${PODCIDR}' < /tmp/flannel-arm64.template > "${conf_dir}/flannel-arm64.yaml"
 kubectl apply -f "${conf_dir}/flannel-arm64.yaml"
