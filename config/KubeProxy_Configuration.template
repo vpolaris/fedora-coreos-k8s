@@ -15,7 +15,7 @@ conntrack:
   min: 0
   tcpCloseWaitTimeout: 1h0m0s
   tcpEstablishedTimeout: 12h0m0s
-detectLocalMode: clusterCIDR
+detectLocalMode: ""
 enableProfiling: false
 healthzBindAddress: 0.0.0.0:10256
 hostnameOverride: ""
