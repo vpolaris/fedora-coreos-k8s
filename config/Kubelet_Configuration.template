@@ -16,6 +16,7 @@ authorization:
 cgroupDriver: systemd
 clusterDNS:
 - 10.0.0.10
+- 192.168.112.120
 clusterDomain: cluster.local
 containerLogMaxFiles: 7
 configMapAndSecretChangeDetectionStrategy: Watch

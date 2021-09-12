@@ -17,6 +17,6 @@ etcd:
 imageRepository: k8s.gcr.io
 networking:
   dnsDomain: rpi.local
-  podSubnet: ${PODCIDR}/24
-  serviceSubnet: 10.11.2.0/24
+  podSubnet: ${PODCIDR}/16
+  serviceSubnet: 10.10.0.0/12
 scheduler: {}

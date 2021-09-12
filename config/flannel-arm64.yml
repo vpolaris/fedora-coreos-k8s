@@ -5,6 +5,7 @@
 #altered volume path /run/flannel ==> /var/run/flannel
 #adding vxlan options GBP and direct routing for loca network see:
 #https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md
+#modified privileged false ==> true
 ---
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -16,7 +17,7 @@ metadata:
     apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
     apparmor.security.beta.kubernetes.io/defaultProfileName: runtime/default
 spec:
-  privileged: false
+  privileged: true
   volumes:
   - configMap
   - secret
