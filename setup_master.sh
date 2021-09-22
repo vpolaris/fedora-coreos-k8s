@@ -19,6 +19,10 @@ mkdir -p "${conf_dir}"
 cp /usr/lib/systemd/system/kubelet.service /etc/systemd/system/
 chmod 644 /etc/systemd/system/kubelet.service
 
+#install CRI-O
+curl https://raw.githubusercontent.com/cri-o/cri-o/main/scripts/get -o /tmp/get
+sh /tmp/get -a arm64
+
 #Initialize services
 sed -i -z s+/usr/share/containers/oci/hooks.d+/etc/containers/oci/hooks.d+ /etc/crio/crio.conf
 systemctl daemon-reload
@@ -94,7 +98,7 @@ sleep 120
 #https://helm.sh/docs/intro/install/
 printf " Helm installtion started.\n "
 echo "HELM_KUBECONFIG=${KUBECONFIG}" >> /etc/profile.d/helm.sh
-echo "$HELM_APISERVER=${IPV4}:6443" >> /etc/profile.d/helm.sh
+echo "HELM_APISERVER=${IPV4}:6443" >> /etc/profile.d/helm.sh
 source /etc/profile.d/helm.sh
 curl -fsSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 -o /tmp/get_helm.sh
 chmod 700 /tmp/get_helm.sh
