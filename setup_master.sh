@@ -26,7 +26,7 @@ sh /tmp/get -a arm64
 #Initialize services
 sed -i -z s+/usr/share/containers/oci/hooks.d+/etc/containers/oci/hooks.d+ /etc/crio/crio.conf
 systemctl daemon-reload
-systemctl enable --now cri-o && systemctl enable --now kubelet
+systemctl enable --now crio && systemctl enable --now kubelet
 
 #Retreive pi master config
 
