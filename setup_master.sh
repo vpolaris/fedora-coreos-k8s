@@ -3,7 +3,7 @@
 #Initialize script environment
 conf_dir="/root/.k8s-install/config"
 log_file="/tmp/k8s-init.log"
-export PODCIDR="10.11.1.0"
+export PODCIDR="10.11.0.0"
 export c_version="$(rpm -qi cri-o | grep Version | cut  -d':' -f2 |xargs)"
 export k_version="$(echo v"$(rpm -qi kubeadm | grep Version | cut  -d':' -f2 |xargs)")"
 export TOKEN="$(kubeadm token create)"
@@ -61,6 +61,8 @@ mv "${conf_dir}/Kubernetes.yaml" "${conf_dir}/Kubernetes.yaml.bkp"
 echo 'export KUBECONFIG=/etc/kubernetes/admin.conf' >> ~/.bash_profile
 export KUBECONFIG=/etc/kubernetes/admin.conf
 kubectl completion bash > /etc/bash_completion.d/kubectl
+source /etc/bash_completion.d/kubectl
+
 systemctl disable install-k8s-1stage.service
 
 #Setup k8s environment fore user core
@@ -91,9 +93,9 @@ sleep 120
 #Install Helm
 #https://helm.sh/docs/intro/install/
 printf " Helm installtion started.\n "
-export HELM_CACHE_HOME="/var/cache/helm"
-export HELM_DATA_HOME="/var/lib/helm"
-export HELM_CONFIG_HOME="/etc/helm"
+echo "HELM_KUBECONFIG=${KUBECONFIG}" >> /etc/profile.d/helm.sh
+echo "$HELM_APISERVER=${IPV4}:6443" >> /etc/profile.d/helm.sh
+source /etc/profile.d/helm.sh
 curl -fsSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 -o /tmp/get_helm.sh
 chmod 700 /tmp/get_helm.sh
 sh /tmp/get_helm.sh
@@ -111,7 +113,7 @@ ${HLBIN} repo update
 
 printf " Ingress NGINX installtion started.\n "
 
-${HLBIN} install ingress-nginx ingress-nginx/ingress-nginx --create-namespace --namespace network >> ${log_file}
+${HLBIN} install ingress-nginx ingress-nginx/ingress-nginx  >> ${log_file}
 # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/baremetal/deploy.yaml
 
 POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=ingress-nginx -n network -o jsonpath='{.items[0].metadata.name}')
@@ -128,7 +130,7 @@ cat << EOF > ${MLBCONFIG}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: network
+  namespace: metallb
   name: config
 data:
   config: |
@@ -139,11 +141,11 @@ data:
       - ${NETRANGE}.210-${NETRANGE}.254
 EOF
 
-
-${HLBIN} install metallb metallb/metallb  --namespace network -f ${MLBCONFIG} >> ${log_file}
+kubectl create secret generic -n network memberlist --from-literal=secretkey="$(openssl rand -base64 128)"  
+${HLBIN} install metallb metallb/metallb  -f ${MLBCONFIG} >> ${log_file}
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
-kubectl create secret generic -n network memberlist --from-literal=secretkey="$(openssl rand -base64 128)"      
+    
 mv "${MLBCONFIG}" "${MLBCONFIG}.bkp"
 
 sleep 120
@@ -152,7 +154,7 @@ sleep 120
 printf "HAProxy installtion started.\n "
 HACONFIG="${conf_dir}/haproxy-ingress-values.yaml"
 echo -e "controller:\\n  hostNetwork: true" > ${HACONFIG}
-${HLBIN} install haproxy-ingress haproxy-ingress/haproxy-ingress  --namespace network  -f "${HACONFIG}" >> ${log_file}
+${HLBIN} install haproxy-ingress haproxy-ingress/haproxy-ingress  -f "${HACONFIG}" >> ${log_file}
 mv "${HACONFIG}"  "${HACONFIG}.bkp"
 
 #Setup network rules
