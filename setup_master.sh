@@ -21,7 +21,7 @@ chmod 644 /etc/systemd/system/kubelet.service
 
 #install CRI-O
 curl -sSL https://raw.githubusercontent.com/cri-o/cri-o/main/scripts/get -o /tmp/get
-sh /tmp/get -a arm64 -t -t v1.21.0
+sh /tmp/get -a arm64 -t v1.21.0
 
 #Initialize services
 sed -i -z s+/usr/share/containers/oci/hooks.d+/etc/containers/oci/hooks.d+ /etc/crio/crio.conf
