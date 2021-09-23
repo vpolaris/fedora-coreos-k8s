@@ -22,6 +22,7 @@ chmod 644 /etc/systemd/system/kubelet.service
 #install CRI-O
 curl -sSL https://raw.githubusercontent.com/cri-o/cri-o/main/scripts/get -o /tmp/get
 sh /tmp/get -a arm64 -t -t v1.21.0
+
 #Initialize services
 sed -i -z s+/usr/share/containers/oci/hooks.d+/etc/containers/oci/hooks.d+ /etc/crio/crio.conf
 systemctl daemon-reload
@@ -116,7 +117,7 @@ ${HLBIN} repo update
 
 printf " Ingress NGINX installtion started.\n "
 
-${HLBIN} install ingress-nginx ingress-nginx/ingress-nginx  >> ${log_file}
+${HLBIN} install ingress-nginx ingress-nginx/ingress-nginx --create-namespace -n network >> ${log_file}
 # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.0/deploy/static/provider/baremetal/deploy.yaml
 
 POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=ingress-nginx -n network -o jsonpath='{.items[0].metadata.name}')
@@ -133,7 +134,7 @@ cat << EOF > ${MLBCONFIG}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: metallb
+  namespace: -n network
   name: config
 data:
   config: |
@@ -145,7 +146,7 @@ data:
 EOF
 
 kubectl create secret generic -n network memberlist --from-literal=secretkey="$(openssl rand -base64 128)"  
-${HLBIN} install metallb metallb/metallb  -f ${MLBCONFIG} >> ${log_file}
+${HLBIN} install metallb metallb/metallb -n network -f ${MLBCONFIG} >> ${log_file}
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
     
@@ -157,7 +158,7 @@ sleep 120
 printf "HAProxy installtion started.\n "
 HACONFIG="${conf_dir}/haproxy-ingress-values.yaml"
 echo -e "controller:\\n  hostNetwork: true" > ${HACONFIG}
-${HLBIN} install haproxy-ingress haproxy-ingress/haproxy-ingress  -f "${HACONFIG}" >> ${log_file}
+${HLBIN} install haproxy-ingress haproxy-ingress/haproxy-ingress -n network -f "${HACONFIG}" >> ${log_file}
 mv "${HACONFIG}"  "${HACONFIG}.bkp"
 
 #Setup network rules
