@@ -13,11 +13,10 @@ authorization:
   webhook:
     cacheAuthorizedTTL: 5m0s
     cacheUnauthorizedTTL: 20s
-certificatesDir: /etc/kubernetes/pki
 cgroupDriver: systemd
 clusterDNS:
 - 10.96.0.10
-clusterDomain: cluster.local
+clusterDomain: rpi.local
 containerLogMaxFiles: 7
 configMapAndSecretChangeDetectionStrategy: Watch
 cpuManagerReconcilePeriod: 0s
