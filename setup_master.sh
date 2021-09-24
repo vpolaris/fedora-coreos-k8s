@@ -10,7 +10,7 @@ export k_version="$(echo v"$(rpm -qi kubeadm | grep Version | cut  -d':' -f2 |xa
 export TOKEN="$(kubeadm token create)"
 export NETDEVICE="$(ip -br link | grep -Ev "^(lo|cni|veth|flannel|wlan)" | awk '{print $1}')"
 export IPV4="$(ip -4 -br a s ${NETDEVICE} | awk '{print $3}' | cut -d'/' -f1)"
-export NETRANGE="$(echo $IPV4|cut -d'.' -f1-f3)"
+export NETRANGE="$(echo $IPV4|cut -d'.' -f1-3)"
 export HOSTNAME="$(hostname -f)"
 echo $IPV4 "$(hostname --short)".local >> /etc/avahi/hosts
 
