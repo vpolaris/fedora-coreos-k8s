@@ -51,7 +51,7 @@ export SHA="$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa 
 #Install Kubernetes
 printf "K8S installtion started.\n "
 kubeadm init --config "${conf_dir}/Kubernetes.yaml" --v=3 >> ${log_file}
-if [ "$(grep 'Your Kubernetes control-plane has initialized successfully!' /tmp/k8s-init.log)" != "" ]; then
+if [ "$(grep 'Your Kubernetes control-plane has initialized successfully!' ${log_file})" != "" ]; then
   printf 'installation of K8S master success\n'
 else
   printf 'installation of K8S master failed\n'
@@ -65,33 +65,19 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 kubectl completion bash > /etc/bash_completion.d/kubectl
 source /etc/bash_completion.d/kubectl
 
-systemctl disable install-k8s-1stage.service
-
 #Setup k8s environment fore user core
 mkdir -p /home/core/.kube
 sudo cp -i /etc/kubernetes/admin.conf /home/core/.kube/config
 sudo chown -R core:core /home/core/.kube
 
-rm /root/.k8s-install/1stage
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
 sleep 120
 
-#Deploy flannel
-#https://github.com/flannel-io/flannel
-printf "Flannel installtion started.\n "
-PATCH="{\"spec\":{\"podCIDR\":\"${PODCIDR}\"}}"
-kubectl patch node $(hostname) -p "${PATCH}"
-curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/flannel-arm64.yml -o "/tmp/flannel-arm64.template"
-envsubst '${PODCIDR}' < /tmp/flannel-arm64.template > "${conf_dir}/flannel-arm64.yaml"
-kubectl apply -f "${conf_dir}/flannel-arm64.yaml"
-mv "${conf_dir}/flannel-arm64.yaml" "${conf_dir}/flannel-arm64.yaml.bkp"
 
 # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> ${log_file}
 # kubectl patch configmaps -n kube-system kube-flannel-cfg  -p '{"data": {"net-conf.json": "{\n  \"Network\": \"10.11.0.0/16\",\n  \"Backend\": {\n    \"Type\": \"vxlan\"\n  }\n}\n"}}'
 
-sleep 120
-
-
-
 printf "Setup K8S master completed.\n "
+
+systemctl disable install-k8s-2stage.service
