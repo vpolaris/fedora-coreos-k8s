@@ -74,6 +74,15 @@ kubectl taint nodes --all node-role.kubernetes.io/master-
 
 sleep 120
 
+#Deploy flannel
+#https://github.com/flannel-io/flannel
+printf "Flannel installtion started.\n "
+PATCH="{\"spec\":{\"podCIDR\":\"${PODCIDR}\"}}"
+kubectl patch node $(hostname) -p "${PATCH}"
+curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/flannel-arm64.yml -o "/tmp/flannel-arm64.template"
+envsubst '${PODCIDR}' < /tmp/flannel-arm64.template > "${conf_dir}/flannel-arm64.yaml"
+kubectl apply -f "${conf_dir}/flannel-arm64.yaml"
+mv "${conf_dir}/flannel-arm64.yaml" "${conf_dir}/flannel-arm64.yaml.bkp"
 
 # kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> ${log_file}
 # kubectl patch configmaps -n kube-system kube-flannel-cfg  -p '{"data": {"net-conf.json": "{\n  \"Network\": \"10.11.0.0/16\",\n  \"Backend\": {\n    \"Type\": \"vxlan\"\n  }\n}\n"}}'

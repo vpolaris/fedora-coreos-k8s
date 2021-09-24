@@ -1,17 +1,6 @@
 conf_dir="/root/.k8s-install/config"
 log_file="/root/.k8s-install//k8s-init.log"
 
-#Deploy flannel
-#https://github.com/flannel-io/flannel
-printf "Flannel installtion started.\n "
-PATCH="{\"spec\":{\"podCIDR\":\"${PODCIDR}\"}}"
-kubectl patch node $(hostname) -p "${PATCH}"
-curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/flannel-arm64.yml -o "/tmp/flannel-arm64.template"
-envsubst '${PODCIDR}' < /tmp/flannel-arm64.template > "${conf_dir}/flannel-arm64.yaml"
-kubectl apply -f "${conf_dir}/flannel-arm64.yaml"
-mv "${conf_dir}/flannel-arm64.yaml" "${conf_dir}/flannel-arm64.yaml.bkp"
-
-
 HLBIN="/usr/local/bin/helm"
 
 printf " Helm setup started.\n "
