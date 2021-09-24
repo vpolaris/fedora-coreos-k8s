@@ -8,7 +8,7 @@ clientConnection:
   contentType: application/vnd.kubernetes.protobuf
   kubeconfig: /var/lib/kube-proxy/kubeconfig.conf
   qps: 5
-clusterCIDR: 10.16.0.0/16
+clusterCIDR: ""
 configSyncPeriod: 15m0s
 conntrack:
   maxPerCore: 32768

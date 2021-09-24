@@ -3,8 +3,9 @@
 #Initialize script environment
 conf_dir="/root/.k8s-install/config"
 log_file="/tmp/k8s-init.log"
-export PODCIDR="10.11.0.0"
-export c_version="$(rpm -qi cri-o | grep Version | cut  -d':' -f2 |xargs)"
+export PODCIDR="10.244.0.0/16"
+export SVCIDR="10.96.0.0/12"
+# export c_version="$(rpm -qi cri-o | grep Version | cut  -d':' -f2 |xargs)"
 export k_version="$(echo v"$(rpm -qi kubeadm | grep Version | cut  -d':' -f2 |xargs)")"
 export TOKEN="$(kubeadm token create)"
 export NETDEVICE="$(ip -br link | grep -Ev "^(lo|cni|veth|flannel|wlan)" | awk '{print $1}')"
@@ -22,6 +23,7 @@ chmod 644 /etc/systemd/system/kubelet.service
 #install CRI-O
 curl -sSL https://raw.githubusercontent.com/cri-o/cri-o/main/scripts/get -o /tmp/get
 sh /tmp/get -a arm64 -t v1.21.0
+rm /etc/cni/net.d/10-crio-bridge.conf
 
 #Initialize services
 sed -i -z s+/usr/share/containers/oci/hooks.d+/etc/containers/oci/hooks.d+ /etc/crio/crio.conf
@@ -35,7 +37,7 @@ curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/conf
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/Kubelet_Configuration.template -o /tmp/Kubelet_Configuration.template
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/KubeProxy_Configuration.template -o /tmp/KubeProxy_Configuration.template
 
-envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${PODCIDR}' < /tmp/Cluster_Configuration.template > "${conf_dir}/Cluster_Configuration.yaml"
+envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${PODCIDR} ${SVCIDR}' < /tmp/Cluster_Configuration.template > "${conf_dir}/Cluster_Configuration.yaml"
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${HOSTNAME}' < /tmp/Init_Configuration.template > "${conf_dir}/Init_Configuration.yaml"
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${PODCIDR}' < /tmp/Kubelet_Configuration.template > "${conf_dir}/Kubelet_Configuration.yaml"
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${PODCIDR}' < /tmp/KubeProxy_Configuration.template > "${conf_dir}/KubeProxy_Configuration.yaml"
@@ -53,7 +55,7 @@ export SHA="$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa 
 #Install Kubernetes
 printf "K8S installtion started.\n "
 kubeadm init --config "${conf_dir}/Kubernetes.yaml" --v=3 > ${log_file}
-if [ '$(grep "Your Kubernetes control-plane has initialized successfully!" /tmp/k8s-init.log)'!="" ]; then
+if [ "$(grep 'Your Kubernetes control-plane has initialized successfully!' /tmp/k8s-init.log)" != "" ]; then
   printf 'installation of K8S master success\n'
 else
   printf 'installation of K8S master failed\n'
@@ -145,7 +147,7 @@ data:
       - ${NETRANGE}.210-${NETRANGE}.254
 EOF
 
-kubectl create secret generic -n network memberlist --from-literal=secretkey="$(openssl rand -base64 128)"  
+kubectl create secret generic -n network metallb-memberlist --from-literal=secretkey="$(openssl rand -base64 128)"  
 ${HLBIN} install metallb metallb/metallb -n network -f ${MLBCONFIG} >> ${log_file}
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
 # kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml

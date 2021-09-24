@@ -11,11 +11,10 @@ bootstrapTokens:
 nodeRegistration:
   name: ${HOSTNAME}
   criSocket: unix:///var/run/crio/crio.sock
-  taints:
   kubeletExtraArgs:
     container-runtime: remote
     container-runtime-endpoint: unix:///var/run/crio/crio.sock
-    pod-infra-container-image: k8s.gcr.io/pause:3.5
+    pod-infra-container-image: k8s.gcr.io/pause:3.4
   imagePullPolicy: IfNotPresent
 localAPIEndpoint:
   advertiseAddress: ${IPV4}

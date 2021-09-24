@@ -13,10 +13,10 @@ authorization:
   webhook:
     cacheAuthorizedTTL: 5m0s
     cacheUnauthorizedTTL: 20s
+certificatesDir: /etc/kubernetes/pki
 cgroupDriver: systemd
 clusterDNS:
-- 10.0.0.10
-- 192.168.112.120
+- 10.96.0.10
 clusterDomain: cluster.local
 containerLogMaxFiles: 7
 configMapAndSecretChangeDetectionStrategy: Watch
@@ -35,7 +35,7 @@ nodeStatusReportFrequency: 5m0s
 nodeStatusUpdateFrequency: 45s
 nodeLeaseDurationSeconds: 120
 resolvConf: /run/systemd/resolve/resolv.conf
-podCIDR: ${PODCIDR}/24
+podCIDR: ${PODCIDR}
 rotateCertificates: true
 runtimeRequestTimeout: 10m
 shutdownGracePeriod: 30s

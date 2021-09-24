@@ -10,13 +10,11 @@ clusterName: rpi
 controllerManager:
   extraArgs:
     flex-volume-plugin-dir: /var/lib/kubelet/volumeplugins
-dns: {}
 etcd:
   local:
     dataDir: /var/lib/etcd
 imageRepository: k8s.gcr.io
 networking:
   dnsDomain: rpi.local
-  podSubnet: ${PODCIDR}/16
-  serviceSubnet: 10.10.0.0/12
-scheduler: {}
+  podSubnet: ${PODCIDR}
+  serviceSubnet: ${SVCIDR}

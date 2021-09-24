@@ -133,7 +133,7 @@ data:
     }
   net-conf.json: |
     {
-      "Network": "${PODCIDR}/16",
+      "Network": "${PODCIDR}",
       "Backend": {
         "Type": "vxlan",
         "GBP": true,
