@@ -1,6 +1,11 @@
 conf_dir="/root/.k8s-install/config"
 log_file="/root/.k8s-install//k8s-init.log"
 
+export NETDEVICE="$(ip -br link | grep -Ev "^(lo|cni|veth|flannel|wlan)" | awk '{print $1}')"
+export IPV4="$(ip -4 -br a s ${NETDEVICE} | awk '{print $3}' | cut -d'/' -f1)"
+export NETRANGE="$(echo $IPV4|cut -d'.' -f1-3)"
+export KUBECONFIG=/etc/kubernetes/admin.conf
+
 HLBIN="/usr/local/bin/helm"
 
 printf " Helm setup started.\n "
@@ -31,7 +36,7 @@ cat << EOF > ${MLBCONFIG}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: -n network
+  namespace: network
   name: config
 data:
   config: |
@@ -39,7 +44,7 @@ data:
     - name: default
       protocol: layer2
       addresses:
-      - ${NETRANGE}.210-${NETRANGE}.254
+      - ${NETRANGE}.200/25
 EOF
 
 kubectl create secret generic -n network metallb-memberlist --from-literal=secretkey="$(openssl rand -base64 128)"  
@@ -66,20 +71,12 @@ iptables-save > /etc/sysconfig/iptables
 
 #Setup mDNS web server
 printf "Setup mDNS web server.\n "
-SHARE="/var/srv/share"
-mkdir -p ${SHARE}
+
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/http.service -o /etc/avahi/services/http.service
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/web_mdns_server.yaml -o /tmp/web_mdns_server.template
 envsubst '${HOSTNAME}' < /tmp/web_mdns_server.template > "${conf_dir}/web_mdns_server.yaml"
 kubectl apply -f "${conf_dir}/web_mdns_server.yaml"
 
-KUBCONFIG="${SHARE}/kubejoin.ini"
-printf "NETDEVICE=${NETDEVICE}\n" > ${KUBCONFIG}
-printf "HOSTNAME=$(hostname -f)\n" >> ${KUBCONFIG}
-printf "IPV4=${IPV4}\n" >> ${KUBCONFIG}
-printf "TOKEN=${TOKEN}\n" >> ${KUBCONFIG}
-printf "SHA=${SHA}\n" >> ${KUBCONFIG}
-chown core:core ${KUBCONFIG}
-chmod 766 ${KUBCONFIG}
+
 
 systemctl disable install-k8s-3stage.service

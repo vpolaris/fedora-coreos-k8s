@@ -15,7 +15,7 @@ authorization:
     cacheUnauthorizedTTL: 20s
 cgroupDriver: systemd
 clusterDNS:
-- 10.96.0.10
+- 10.0.0.10
 clusterDomain: rpi.local
 containerLogMaxFiles: 7
 configMapAndSecretChangeDetectionStrategy: Watch

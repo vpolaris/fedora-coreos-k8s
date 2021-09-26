@@ -5,7 +5,7 @@ DEVICE=/dev/sdd
 sudo parted ${DEVICE} -- rm 2
 sudo parted ${DEVICE} -- rm 3
 sudo parted ${DEVICE} -- rm 4
-sudo coreos-installer install ${DEVICE} -i pi01.ign -f  fedora-coreos-34.20210901.dev.0-metal.aarch64.raw.xz --offline --insecure -n --network-dir ./network
+sudo coreos-installer install ${DEVICE} -i pi01.ign -f  fedora-coreos-34.20210915.dev.0-metal.aarch64.raw.xz --offline --insecure -n --network-dir ./network
 sleep 2
 sudo mount ${DEVICE}2 /media/efi/
 sleep 2
