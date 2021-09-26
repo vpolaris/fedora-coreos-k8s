@@ -14,11 +14,21 @@ export NETRANGE="$(echo $IPV4|cut -d'.' -f1-3)"
 export HOSTNAME="$(hostname -f)"
 echo $IPV4 "$(hostname --short)".local >> /etc/avahi/hosts
 
+SHARE="/var/srv/share"
+mkdir -p ${SHARE}
 
+KUBCONFIG="${SHARE}/kubejoin.ini"
+printf "NETDEVICE=${NETDEVICE}\n" > ${KUBCONFIG}
+printf "HOSTNAME=$(hostname -f)\n" >> ${KUBCONFIG}
+printf "IPV4=${IPV4}\n" >> ${KUBCONFIG}
+printf "TOKEN=${TOKEN}\n" >> ${KUBCONFIG}
+
+chown core:core ${KUBCONFIG}
+chmod 766 ${KUBCONFIG}
 
 #Copy service file
-cp /usr/lib/systemd/system/kubelet.service /etc/systemd/system/
-chmod 644 /etc/systemd/system/kubelet.service
+# cp /usr/lib/systemd/system/kubelet.service /etc/systemd/system/
+# chmod 644 /etc/systemd/system/kubelet.service
 
 
 #Initialize services
@@ -47,6 +57,7 @@ done
 
 kubeadm init phase certs all --config "${conf_dir}/Kubernetes.yaml"
 export SHA="$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //')"
+printf "SHA=${SHA}\n" >> ${KUBCONFIG}
 
 #Install Kubernetes
 printf "K8S installtion started.\n "

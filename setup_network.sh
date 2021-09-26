@@ -1,3 +1,4 @@
+#!/bin/bash
 conf_dir="/root/.k8s-install/config"
 log_file="/root/.k8s-install//k8s-init.log"
 
