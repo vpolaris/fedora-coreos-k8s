@@ -1,7 +1,6 @@
 #!/bin/bash
 CNI_VERSION="v1.0.1"
-CRICTL_VERSION="v1.21.0"
-KUBE_VERSION="v1.21.0"
+VERSION="v1.21.0"
 DOWNLOAD_DIR=/usr/local/bin
 ARCH="arm64"
 conf_dir="/root/.k8s-install/config"
@@ -46,30 +45,40 @@ iptables-save > /etc/sysconfig/iptables
 mkdir -p /opt/cni/bin
 mkdir -p "${conf_dir}"
 
-#Install CNI Plugin
-#https://github.com/containernetworking/plugins
-curl -sSL  "https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-linux-${ARCH}-${CNI_VERSION}.tgz" | tar -C /opt/cni/bin-xz
 
 #Install CRI-O
 #https://github.com/kubernetes-sigs/cri-tools
 printf " CRI-O installtion started.\n "
-# curl -sSL https://raw.githubusercontent.com/cri-o/cri-o/main/scripts/get -o /tmp/get
-# sh /tmp/get -a arm64 -t v1.21.0 > ${log_file}
-curl -sSL "https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-${ARCH}.tar.gz" | tar -C $DOWNLOAD_DIR -xz
+curl -sSL https://raw.githubusercontent.com/cri-o/cri-o/main/scripts/get -o /tmp/get
+sh /tmp/get -a ${ARCH} -t ${VERSION}> ${log_file}
+curl -sSL "https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${VERSION}-linux-${ARCH}.tar.gz" | tar -C $DOWNLOAD_DIR -xz
 crictl completion > /etc/bash_completion.d/crictl
-curl -sSL "https://raw.githubusercontent.com/cri-o/cri-o/main/contrib/cni/11-crio-ipv4-bridge.conf" | sed "s:10.85.0.0/16:${DOWNLOAD_DIR}:g" | tee /etc/cni/net.d/11-crio-ipv4-bridge.conf 
+curl -sSL "https://raw.githubusercontent.com/cri-o/cri-o/main/contrib/cni/11-crio-ipv4-bridge.conf" | sed "s:10.85.0.0/16:${PODCIDR}:g" | tee /etc/cni/net.d/11-crio-ipv4-bridge.conf 
 curl -sSL "https://raw.githubusercontent.com/cri-o/cri-o/main/contrib/cni/99-loopback.conf" -o /etc/cni/net.d/99-loopback.conf
 curl -sSL "https://raw.githubusercontent.com/cri-o/cri-o/main/contrib/systemd/crio.service" -o /etc/systemd/system/crio.service 
+cp /usr/local/share/bash-completion/completions/crio /etc/bash_completion.d/crio
+rm /etc/cni/net.d/10-crio-bridge.conf
+systemctl daemon-reload
+systemctl enable --now crio
+
+#Install CNI Plugin
+#https://github.com/containernetworking/plugins
+printf "CNI deployment started.\n "
+curl -sSL  "https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-linux-${ARCH}-${CNI_VERSION}.tgz" | tar -C /opt/cni/bin -xz
+
 
 #Install  K8S
 #https://kubernetes.io/docs/setup/production-environment/_print/#pg-a77d3feb6e6d9978f32fa14622642e9a
+printf "K8s deployment started.\n "
+mkdir -p /etc/kubernetes/{pki,manifest}
 cd $DOWNLOAD_DIR
-curl -sSL --remote-name-all https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/${ARCH}/{kubeadm,kubelet,kubectl}
+curl -sSL --remote-name-all https://storage.googleapis.com/kubernetes-release/release/${VERSION}/bin/linux/${ARCH}/{kubeadm,kubelet,kubectl}
 chmod u+x {kubeadm,kubelet,kubectl}
 curl -sSL  https://raw.githubusercontent.com/kubernetes/release/master/cmd/kubepkg/templates/latest/rpm/kubelet/kubelet.service | sed "s:/usr/bin:${DOWNLOAD_DIR}:g" | tee /etc/systemd/system/kubelet.service
-
+systemctl daemon-reload
+systemctl enable --now kubelet
 #Install conntrack and avahi
-printf "  K8S and avahi deplyment started.\n "
+printf "Avahi deployment started.\n "
 rpm-ostree refresh-md
 rpm-ostree install conntrack avahi avahi-tools nss-mdns --allow-inactive
 
