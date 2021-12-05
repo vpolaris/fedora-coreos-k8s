@@ -6,7 +6,7 @@ log_file="/root/.k8s-install//k8s-init.log"
 export PODCIDR="10.244.0.0/16"
 export SVCIDR="10.96.0.0/12"
 # export c_version="$(rpm -qi cri-o | grep Version | cut  -d':' -f2 |xargs)"
-export k_version="$(echo v"$(rpm -qi kubeadm | grep Version | cut  -d':' -f2 |xargs)")"
+export k_version="1.21.0"
 export TOKEN="$(kubeadm token create)"
 export NETDEVICE="$(ip -br link | grep -Ev "^(lo|cni|veth|flannel|wlan)" | awk '{print $1}')"
 export IPV4="$(ip -4 -br a s ${NETDEVICE} | awk '{print $3}' | cut -d'/' -f1)"
@@ -43,6 +43,13 @@ curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/conf
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/Kubelet_Configuration.template -o /tmp/Kubelet_Configuration.template
 curl -sSL https://raw.githubusercontent.com/vpolaris/fedora-coreos-k8s/main/config/KubeProxy_Configuration.template -o /tmp/KubeProxy_Configuration.template
 
+export k_version=${k_version}
+export TOKEN=${TOKEN}
+export IPV4=${IPV4}
+export SHA=${SHA}
+export PODCIDR=${PODCIDR}
+export SVCIDR=${SVCIDR}
+  
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${PODCIDR} ${SVCIDR}' < /tmp/Cluster_Configuration.template > "${conf_dir}/Cluster_Configuration.yaml"
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${HOSTNAME}' < /tmp/Init_Configuration.template > "${conf_dir}/Init_Configuration.yaml"
 envsubst '${k_version} ${TOKEN} ${IPV4} ${SHA} ${PODCIDR}' < /tmp/Kubelet_Configuration.template > "${conf_dir}/Kubelet_Configuration.yaml"
